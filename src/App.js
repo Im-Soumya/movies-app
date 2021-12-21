@@ -1,68 +1,78 @@
 import React from "react"
 import MovieList from "./components/MovieList";
+import "bootstrap/dist/css/bootstrap.min.css";
+import MovieListHeading from "./components/MovieListHeading";
+import SearchBox from "./components/SearchBox";
+import "./App.css"
+import AddFav from "./components/AddFav";
+import RemoveFav from "./components/RemoveFav";
 
 function App() {
-  const [movies, setMovies] = React.useState([
-    {
-      "Title": "Star Wars: Episode IV - A New Hope",
-      "Year": "1977",
-      "imdbID": "tt0076759",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BNzVlY2MwMjktM2E4OS00Y2Y3LWE3ZjctYzhkZGM3YzA1ZWM2XkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode V - The Empire Strikes Back",
-      "Year": "1980",
-      "imdbID": "tt0080684",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BYmU1NDRjNDgtMzhiMi00NjZmLTg5NGItZDNiZjU5NTU4OTE0XkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode VI - Return of the Jedi",
-      "Year": "1983",
-      "imdbID": "tt0086190",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BOWZlMjFiYzgtMTUzNC00Y2IzLTk1NTMtZmNhMTczNTk0ODk1XkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode VII - The Force Awakens",
-      "Year": "2015",
-      "imdbID": "tt2488496",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BOTAzODEzNDAzMl5BMl5BanBnXkFtZTgwMDU1MTgzNzE@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode I - The Phantom Menace",
-      "Year": "1999",
-      "imdbID": "tt0120915",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BYTRhNjcwNWQtMGJmMi00NmQyLWE2YzItODVmMTdjNWI0ZDA2XkEyXkFqcGdeQXVyNTAyODkwOQ@@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode III - Revenge of the Sith",
-      "Year": "2005",
-      "imdbID": "tt0121766",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BNTc4MTc3NTQ5OF5BMl5BanBnXkFtZTcwOTg0NjI4NA@@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode II - Attack of the Clones",
-      "Year": "2002",
-      "imdbID": "tt0121765",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BMDAzM2M0Y2UtZjRmZi00MzVlLTg4MjEtOTE3NzU5ZDVlMTU5XkEyXkFqcGdeQXVyNDUyOTg3Njg@._V1_SX300.jpg"
-  },
-  {
-      "Title": "Star Wars: Episode VIII - The Last Jedi",
-      "Year": "2017",
-      "imdbID": "tt2527336",
-      "Type": "movie",
-      "Poster": "https://m.media-amazon.com/images/M/MV5BMjQ1MzcxNjg4N15BMl5BanBnXkFtZTgwNzgwMjY4MzI@._V1_SX300.jpg"
+  const [movies, setMovies] = React.useState([])
+  const [searchValue, setSearchValue] = React.useState('')
+  const [favourites, setFavourites] = React.useState([])
+  
+  const getMovies = async (searchValue) => {
+    const url = `http://www.omdbapi.com/?s=${searchValue}&apikey=ef03579a`
+    const res = await fetch(url)
+    const data = await res.json()
+    if(data.Search) {
+      setMovies(data.Search)
+    }
   }
-  ])
+
+  React.useEffect(() => {
+    getMovies(searchValue)
+  }, [searchValue])
+
+  React.useEffect(() => {
+    const movieFavourites = JSON.parse(localStorage.getItem('favourite-movies'))
+    setFavourites(movieFavourites)
+  }, [])
+  
+  const saveToStorage = (items) => {
+    localStorage.setItem('favourite-movies', JSON.stringify(items))
+  }
+
+  function handleChange(event) {
+    setSearchValue(event.target.value)
+  }
+
+  function addFavourite(movie) {
+    const newList = [...favourites, movie]
+    setFavourites(newList)
+    saveToStorage(newList)
+  }
+
+  function removeFavourite(movie) {
+    const newList = favourites.filter((favourite) => favourite.imdbID !== movie.imdbID)
+    setFavourites(newList)
+    saveToStorage(newList)
+  }
+
   return (
-    <div className="App">
-      <MovieList movies={movies}/>
+    <div className="container-fluid movieApp">
+      <div className="row d-flex align-items-center mt-4 mb-4">
+        <MovieListHeading heading='Movies'/>
+        <SearchBox Change={handleChange}/>
+      </div>
+      <div className="row">
+        <MovieList 
+          movies={movies}
+          favcomponent={AddFav}
+          favourites={addFavourite}
+        />
+      </div>
+      <div className="row d-flex align-items-center mt-4 mb-4">
+        <MovieListHeading heading='Favourites'/>
+      </div>
+      <div className="row">
+        <MovieList 
+          movies={favourites}
+          favcomponent={RemoveFav}
+          favourites={removeFavourite}
+        />
+      </div>
     </div>
   );
 }
